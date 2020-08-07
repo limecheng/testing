@@ -1,0 +1,32 @@
+IP=35.198.220.79
+
+# Make directory to contain all content
+mkdir $IP
+cd $IP
+
+# Create extfile used for holding parameters
+echo "subjectAltName = IP:$IP" > extfile.cnf
+
+# Creating CA
+echo "==================================================================================================="
+echo "                                                                         === CREATING CERT AUTH ==="
+echo "==================================================================================================="
+openssl req -newkey rsa:4096 -nodes -sha256 -keyout ca.key -x509 -days 3650 -out ca.crt
+
+# Generatinng cert-request
+echo "==================================================================================================="
+echo "                                                                    === GENERATING CERT REQUEST ==="
+echo "==================================================================================================="
+openssl req -newkey rsa:4096 -nodes -sha256 -keyout $IP -out $IP
+
+# Generate the cert
+echo "==================================================================================================="
+echo "                                                                            === GENERATING CERT ==="
+echo "==================================================================================================="
+openssl x509 -req -days 65 -in $IP -CA ca.crt -CAkey ca.key -CAcreateserial -extfile extfile.cnf -out $IP
+
+# useful reminder
+echo "==================================================================================================="
+echo "                 To inspect the cert: openssl x509 -text -noout -in <certificate>                  "
+echo "==================================================================================================="
+

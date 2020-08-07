@@ -1,0 +1,5 @@
+sudo DEBIAN_FRONTEND=noninteractive sudo apt-get install -y nginx
+sudo systemctl start nginx
+sudo systemctl enable nginx
+wget https://github.com/goharbor/harbor/releases/download/v2.0.2-rc1/harbor-offline-installer-v2.0.2-rc1.tgz
+

@@ -1,11 +1,11 @@
-IP=35.198.220.79
+IP=a.b.c.d
 
 # Make directory to contain all content
 mkdir $IP
 cd $IP
 
 # Create extfile used for holding parameters
-echo "subjectAltName = IP:$IP" > extfile.cnf
+echo "subjectAltName = DNS:$IP" > extfile.cnf
 
 # Creating CA
 echo "==================================================================================================="

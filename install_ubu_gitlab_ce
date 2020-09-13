@@ -1,3 +1,6 @@
+# source: https://www.howtoforge.com/how-to-install-gitlab-with-docker-on-ubuntu-2004/
+# Reminder: check the output of docker-compose.yml generated. May be missing some fields.
+
 hostname=gitlab.demo.demoandpoc.cloud
 email=engcheng@sysguard.sg
 
@@ -49,8 +52,10 @@ web:
 EOF
 
 sudo certbot certonly --rsa-key-size 2048 --standalone --agree-tos --no-eff-email --email $email -d $hostname
-sudo cp /etc/letsencrypt/live/$hostname/fullchain.pem /srv/gitlab/config/ssl/
-sudo cp /etc/letsencrypt/live/$hostname/privkey.pem /srv/gitlab/config/ssl/
+
+# example if hostname is gitlab.haha.com, then should copied as gitlab.haha.com.crt and gitlab.haha.com.key
+sudo cp /etc/letsencrypt/live/$hostname/fullchain.pem /srv/gitlab/config/ssl/$hostname.crt
+sudo cp /etc/letsencrypt/live/$hostname/privkey.pem /srv/gitlab/config/ssl/$hostname.key
 
 # generate dhparam.pem
 sudo openssl dhparam -out ~/dhparams.pem 2048

@@ -1,0 +1,58 @@
+hostname=gitlab.demo.demoandpoc.cloud
+email=engcheng@sysguard.sg
+
+
+sudo DEBIAN_FRONTEND=noninteractive apt-get remove docker docker-engine docker.io containerd runc
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo DEBIAN_FRONTEND=noninteractive add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+sudo apt-get update
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose
+sudo DEBIAN_FRONTEND=noninteractive systemctl start docker
+sudo DEBIAN_FRONTEND=noninteractive systemctl enable docker
+
+# store all docker script and configuration for GitLab
+mkdir -p ~/gitlab; cd ~/gitlab/
+echo 'GITLAB_HOME=/srv/gitlab' > .env
+echo 'hostname=\'$hostname\'' >> .env
+
+# directory for storing all our GitLab data 
+sudo mkdir -p /srv/gitlab/{config/ssl,logs,data}
+
+# generate docker-compose.yml
+
+cat <<EOF > docker-compose.yml
+web:
+  image: 'gitlab/gitlab-ce:latest'
+  restart: always
+  hostname: '${hostname}'
+
+  environment:
+    GITLAB_OMNIBUS_CONFIG: |
+      external_url 'https://${hostname}'
+      gitlab_rails['gitlab_shell_ssh_port'] = 2224
+      nginx['redirect_http_to_https'] = true
+      nginx['ssl_certificate'] = "/etc/gitlab/ssl/fullchain.pem"
+      nginx['ssl_certificate_key'] = "/etc/gitlab/ssl/privkey.pem"
+      nginx['ssl_dhparam'] = "/etc/gitlab/ssl/dhparams.pem"
+
+  ports:
+    - '80:80'
+    - '443:443'
+    - '2224:22'
+
+  volumes:
+    - '${GITLAB_HOME}/config:/etc/gitlab'
+    - '${GITLAB_HOME}/logs:/var/log/gitlab'
+    - '${GITLAB_HOME}/data:/var/opt/gitlab'
+    - '${GITLAB_HOME}/config/ssl:/etc/gitlab/ssl'
+EOF
+
+sudo certbot certonly --rsa-key-size 2048 --standalone --agree-tos --no-eff-email --email $email -d $hostname
+sudo cp /etc/letsencrypt/live/$hostname/fullchain.pem /srv/gitlab/config/ssl/
+sudo cp /etc/letsencrypt/live/$hostname/privkey.pem /srv/gitlab/config/ssl/
+
+# generate dhparam.pem
+sudo openssl dhparam -out ~/dhparams.pem 2048
+sudo cp ~/dhparams.pem /srv/gitlab/config/ssl/
+
